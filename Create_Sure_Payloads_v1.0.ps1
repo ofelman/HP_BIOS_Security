@@ -80,22 +80,22 @@ if ( $spm ) {
     # Create the Endorsement Payload
     # =========================================
 
-    #write-Output 'Create the Endorsement Provisioning Payload: EKpayload.dat (with HP CMSL)'
+    write-Output 'Create the Endorsement Provisioning Payload: EKpayload.dat'
     if ( Get-HPBIOSSetupPasswordIsSet ) {
         New-HPSecurePlatformEndorsementKeyProvisioningPayload -EndorsementKeyFile $EKpfx -EndorsementKeyPassword $EKCertPwd -BIOSPassword $BIOSPwd -OutputFile EKpayload.dat
     } else {
         New-HPSecurePlatformEndorsementKeyProvisioningPayload -EndorsementKeyFile $EKpfx -EndorsementKeyPassword $EKCertPwd -OutputFile EKpayload.dat
     }
-    write-Output 'Create the Endorsement Key Deprovisioning Payload: EKDepropayload.dat (with HP CMSL)'
+    write-Output 'Create the Endorsement Key Deprovisioning Payload: EKDepropayload.dat'
     New-HPSecurePlatformDeprovisioningPayload -EndorsementKeyFile $EKpfx -EndorsementKeyPassword $EKCertPwd -OutputFile EKDepropayload.dat
 
     # =========================================
     # Create the Signing Keys and Payload
     # =========================================
 
-    write-Output 'Create the Signing Key ProvisioningKey Payload: SKpayload.dat (with HP CMSL)'
+    write-Output 'Create the Signing Key Provisioning Payload: SKpayload.dat'
     New-HPSecurePlatformSigningKeyProvisioningPayload -EndorsementKeyFile $EKpfx -EndorsementKeyPassword $EKCertPwd -SigningKeyFile $SKpfx -SigningKeyPassword $SKCertPwd -OutputFile SKpayload.dat
-}
+} # if ( $spm )
 
 #=====================================================================================
 
@@ -109,17 +109,17 @@ if ( $sureadmin ) {
     # Create Sure Admin Enable & Disable Payloads
     # - for remote access to F10 BIOS
     # =========================================
-    write-Output 'Create the Sure Admin Enable Provisioning Payload: SApayload.dat (with HP CMSL)'
+    write-Output 'Create the Sure Admin Enable Provisioning Payload: SApayload.dat'
     New-HPSureAdminEnablePayload -SigningKeyFile $SKpfx -OutputFile SAEnablepayload.dat 
-    write-Output 'Create the Sure Admin Disable Deprovisioning Payload: SADeproPayload.dat (with HP CMSL)'
+    write-Output 'Create the Sure Admin Disable Deprovisioning Payload: SADeproPayload.dat'
     New-HPSureAdminDisablePayload -SigningKeyFile $SKpfx -OutputFile SADisablePayload.dat 
 
-    write-Output 'Create the Sure Admin LAK Provisioning Payload: LAKpayload.dat (with HP CMSL)'
+    write-Output 'Create the Sure Admin LAK Provisioning Payload: LAKpayload.dat'
     New-HPSureAdminLocalAccessKeyProvisioningPayload -SigningKeyFile $SKpfx -LocalAccessKeyFile $LAKpfx -OutputFile LAKpayload.dat 
-    write-Output 'Create the Sure Admin LAK Deprovisioning Payload: LAKDepropayload.dat (with HP CMSL)'
+    write-Output 'Create the Sure Admin LAK Deprovisioning Payload: LAKDepropayload.dat'
     New-HPSureAdminBIOSSettingValuePayload -SigningKeyFile $SKpfx -Name "Enhanced BIOS Authentication Mode Local Access Key 1" -Value "" -OutputFile LAKDepropayload.dat
 
-}
+} # if ( $sureadmin )
 
 #=====================================================================================
 
@@ -127,7 +127,7 @@ if ( $sureadmin ) {
 # Move required client payloads to folder
 # =========================================
 
-write-Output "Moving provisioning Payload files to folder: $($payloadPath)" -ForegroundColor Gray
+write-Output "Moving provisioning Payload files to folder: $($payloadPath)"
 if ( -not (Test-Path -Path $payloadPath) ) {
     New-Item $payloadPath -ItemType Directory -Force
 }
