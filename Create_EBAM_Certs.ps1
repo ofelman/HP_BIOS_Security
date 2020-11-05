@@ -56,7 +56,7 @@ if ( ($PSBoundParameters.count -eq 0) -or ($Help) ) {
 if (-not (Test-Path $CertPath)) {
     New-Item -Path $CertPath -ItemType directory | Out-Null
 }
-<#
+#<#
     #------------------------------------------------------------------------
     # Uncomment, mod next few lines if you are using newly downloaded OpenSSL
     #------------------------------------------------------------------------
@@ -102,15 +102,14 @@ Function Create_Certs {
         [string]$certSubj,
         [string]$certName
     )
-
     <#
-    NOTES: The openssl '-subj' parameter should be updated to reflect information specifc to your organization. 
-               If you do not include this parameter, openssl will prompt you for the information.
+    NOTES: Oenssl '-subj' parameter should be updated to reflect the organization. If not included, openssl will prompt for the information.
            -X509: means sign certificate as CA according to RFC 5280
            -nodes: means no DES (private key not passowrd protected)
-           -newkey: add provate key, what format to use for encryption (here is rsa:2048)
+           -newkey: add private key, what format to use for encryption (we use rsa:2048)
            -keyout: exports the Private key
            -out: exports self-signed certificate
+
            cert file in PEM format: https://www.openssl.org/docs/manmaster/man1/openssl.html
               (a block of base-64 encoding with specific lines used to mark the start and end)
  
@@ -120,15 +119,29 @@ Function Create_Certs {
 
            https://www.openssl.org/docs/manmaster/man1/openssl-pkcs8.html - explanation of encryption algorithms (e.g. PBE-SHA1-3DES)
 
-    NOTES: The files EK.pem and EKcert.crt are temp files that could be securely discarded.
-            The private key in EK.pfx is not protected if no export password has been provided.
+    NOTES: Files like EKpriv.pem and EKcert.crt are temp files that could be securely discarded.
+            The private .pfx key is not protected if no export password has been provided.
     #>
 
     write-Output "-> STEP 1: Create private key $privKeyName and self-signed X.509 certificate $x509CertName"
-    openssl.exe req -x509 -nodes -newkey rsa:2048 -keyout (Join-Path $CertPath $privKeyName) -out (Join-Path $CertPath $x509CertName) -days 3650 -subj $CertSubj 2>$null
+    openssl.exe req -x509 `
+        -nodes `
+        -newkey rsa:2048 `
+        -keyout (Join-Path $CertPath $privKeyName) `
+        -out (Join-Path $CertPath $x509CertName) `
+        -days 3650 `
+        -subj $CertSubj 2>$null
 
     write-Output "-> STEP 2: Create PKCS#12 certificate $pkcs12CertName"
-    openssl.exe pkcs12 -inkey (Join-Path $CertPath $privKeyName) -in (Join-Path $CertPath $x509CertName) -export -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -out (Join-Path $CertPath $pkcs12CertName) -name $certName -passout pass:$certPwd 2>$null
+    openssl.exe pkcs12 `
+        -inkey (Join-Path $CertPath $privKeyName) `
+        -in (Join-Path $CertPath $x509CertName) `
+        -export `
+        -keypbe PBE-SHA1-3DES `
+        -certpbe PBE-SHA1-3DES `
+        -out (Join-Path $CertPath $pkcs12CertName) `
+        -name $certName `
+        -passout pass:$certPwd 2>$null
 
 } # Function Create_Certs
 
@@ -143,10 +156,10 @@ if ($SPM) {
     # Create the Endorsement and Signing Keys
     # =========================================
 
-    Write-Host 'Create SPM Endorsement key certificate'
+    Write-Host 'Create SPM Endorsement key certificate EK.pfx'
     Create_Certs EKpriv.pem EKcert.crt EK.pfx $EKCertPwd $certSubj 'SPM Endorsement Key Certificate'
     
-    Write-Host 'Create SPM Signing key certificate'
+    Write-Host 'Create SPM Signing key certificate SK.pfx'
     Create_Certs SKpriv.pem SKcert.crt SK.pfx $SKCertPwd $certSubj 'SPM Signing Key Certificate'
 }
 
@@ -156,11 +169,14 @@ if ($SPM) {
 # HP Sure Admin (EBAM)
 # =========================================
 
+# NOTE: The Sure Admin Payload will be created with CMSL without requiring a new certificate
+#       The Local Access Key certificate next will be used to allow F10 user access to BIOS
+
 if ($EBAM) {
     # =========================================
     # Create EBAM local access key certificate
     # =========================================
 
-    Write-Host 'Create HP Sure Admin local access key certificate'
+    Write-Host 'Create HP Sure Admin local access key certificate LAK.pfx'
     Create_Certs LAKpriv.pem LAKcert.crt LAK.pfx $LAKCertPwd $certSubj 'EBAM Local Access Key Certificate'
 }
