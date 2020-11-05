@@ -1,4 +1,4 @@
-﻿# Script: Provision_SureAdmin
+﻿# Script: Provision_EBAM
 # by Juergen Bayer, Dan Felman
 # HP Inc - 11/5/2020
 # Version 1.0
