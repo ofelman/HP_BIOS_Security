@@ -1,6 +1,6 @@
 ﻿# Script: Provision_SureAdmin
 # by Juergen Bayer, Dan Felman
-# HP Inc - 11/3/2020
+# HP Inc - 11/5/2020
 # Version 1.0
 
 # Script will provision, or deprovision the HP Sure Admin feature Payload
@@ -40,12 +40,12 @@ Param(
 if ( ($PSBoundParameters.count -eq 0) -or ($help) ) {
     "Run script with options > "
     "-Provision"
-    "`t> Provision_SureAdmin_v1.0.ps1 -action provision       # assume provision files in current folder"
-    "`t> Provision_SureAdmin_v1.0.ps1 -action provision [[-SAEnable <file>] [-LAKEnable <file>]]"
+    "`t> Provision_EBAM.ps1 -action provision       # assume provision files in current folder"
+    "`t> Provision_EBAM.ps1 -action provision [[-SAEnable <file>] [-LAKEnable <file>]]"
     "`t`tNOTE: If -LAKEnable argument is passed or LAKpayload.dat is in the script folder, it will be provisioned"
     "-Deprovision"
-    "`t> Provision_SureAdmin_v1.0.ps1 -action deprovision     # assume deprovision files in current folder"
-    "`t> Provision_SureAdmin_v1.0.ps1 -action deprovision [[-Deprovision <file>]]"
+    "`t> Provision_EBAM.ps1 -action deprovision     # assume deprovision files in current folder"
+    "`t> Provision_EBAM.ps1 -action deprovision [[-Deprovision <file>]]"
     "`t`tNOTE: If -LAKDisable argument is passed or LAKDepropayload.dat is in the script folder, it will be provisioned"
     exit
 }
