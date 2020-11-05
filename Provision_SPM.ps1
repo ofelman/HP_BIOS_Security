@@ -48,7 +48,9 @@ Param(
 if ( ($PSBoundParameters.count -eq 0) -or ($help) ) {
     "Run script with options > "
     "`tProvision_SPM.ps1 -action provision | deprovision  # assume files in current folder"
-    "`tProvision_SPM.ps1 -action provision [[-Endorsement <file>] [-Signing <file>]] | deprovision [[-Deprovision <file>]]"
+
+    "`n`tProvision_SPM.ps1 -action provision [[-Endorsement <file>] [-Signing <file>]]"
+    "`tProvision_SPM.ps1 -action deprovision [[-Deprovision <file>]]"
     exit
 }
 # if file path options selected, make sure the file in each arg exists
