@@ -30,7 +30,7 @@
 Param(
     [Parameter(Mandatory=$false)] [switch]$SPM,
     [Parameter(Mandatory=$false)] [switch]$EBAM, 
-    [Parameter(Mandatory=$false)] [string]$CertPath = $PSScriptRoot+'\certs',
+    [Parameter(Mandatory=$false)] [string]$CertsPath = $PSScriptRoot+'\certs',
     [Parameter(Mandatory=$false, ValueFromRemainingArguments)] [switch]$Help
 )
 #=====================================================================================
@@ -39,7 +39,7 @@ Param(
 
 if ( ($PSBoundParameters.count -eq 0) -or ($Help) ) {
     "Run script with options > "
-    "`tCreate_Certs.ps1 [-SPM] | [-EBAM] [-CertPath <path>] [-h|-help]"
+    "`tCreate_Certs.ps1 [-SPM] | [-EBAM] [-CertsPath <path>] [-h|-help]"
     "`tCreate_Certs.ps1 -SPM             # To create certs for SPM - default path to .\Certs"
     "`tCreate_Certs.ps1 -EBAM            # To create certs for Sure Admin/EBAM - default path to .\Certs"
     exit
@@ -53,10 +53,10 @@ if ( $spm -and $ebam ) {
 
 
 # where to put the certificates created
-if (-not (Test-Path $CertPath)) {
-    New-Item -Path $CertPath -ItemType directory | Out-Null
+if (-not (Test-Path $CertsPath)) {
+    New-Item -Path $CertsPath -ItemType directory | Out-Null
 }
-<#
+#<#
     #------------------------------------------------------------------------
     # Uncomment, mod next few lines if you are using newly downloaded OpenSSL
     #------------------------------------------------------------------------
@@ -130,19 +130,19 @@ Function Create_Certs {
     openssl.exe req -x509 `
         -nodes `
         -newkey rsa:2048 `
-        -keyout (Join-Path $CertPath $privKeyName) `
-        -out (Join-Path $CertPath $x509CertName) `
+        -keyout (Join-Path $CertsPath $privKeyName) `
+        -out (Join-Path $CertsPath $x509CertName) `
         -days 3650 `
         -subj $CertSubj 2>$null
 
     write-Output "-> STEP 2: Create PKCS#12 certificate $pkcs12CertName"
     openssl.exe pkcs12 `
-        -inkey (Join-Path $CertPath $privKeyName) `
-        -in (Join-Path $CertPath $x509CertName) `
+        -inkey (Join-Path $CertsPath $privKeyName) `
+        -in (Join-Path $CertsPath $x509CertName) `
         -export `
         -keypbe PBE-SHA1-3DES `
         -certpbe PBE-SHA1-3DES `
-        -out (Join-Path $CertPath $pkcs12CertName) `
+        -out (Join-Path $CertsPath $pkcs12CertName) `
         -name $certName `
         -passout pass:$certPwd 2>$null
 
