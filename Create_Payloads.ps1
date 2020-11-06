@@ -140,6 +140,11 @@ if ( $ebam ) {
         
         write-Output 'Create the Sure Admin LAK Provisioning Payload: LAKpayload.dat'
         New-HPSureAdminLocalAccessKeyProvisioningPayload -SigningKeyFile $SKpfx -SigningKeyPassword $SKCertPwd -LocalAccessKeyFile $LAKpfx -OutputFile LAKpayload.dat 
+    
+        # let's not forget the LAK QR Code image, which could be used for testing the process in the 'HP Sure Admin' phone app
+        write-host 'Convert LAK certificate to QR Code (with HP CMSL)'
+        Convert-HPSureAdminCertToQRCode -LocalAccessKeyFile $LAKpfx -OutputFile .\LAK_QRCode.jpg -LocalAccessKeyPassword $LAKCertPwd -Passphrase $LAKCertPwd # -ViewAs Image 
+        sleep 1      # wait to display the image, before being moved to payloads
     }
     if ( $deprovision ) {
         write-Output 'Create the Sure Admin Disable Deprovisioning Payload: SADeproPayload.dat'
@@ -162,4 +167,4 @@ if ( -not (Test-Path -Path $payloadsPath) ) {
     New-Item $payloadsPath -ItemType Directory -Force
 }
 Move-Item -Path "*.dat" -Destination $payloadsPath -Force
-
+Move-Item -Path "*.jpg" -Destination $payloadsPath -Force
