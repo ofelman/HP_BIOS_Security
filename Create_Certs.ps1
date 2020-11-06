@@ -56,7 +56,7 @@ if ( $spm -and $ebam ) {
 if (-not (Test-Path $CertsPath)) {
     New-Item -Path $CertsPath -ItemType directory | Out-Null
 }
-#<#
+<#
     #------------------------------------------------------------------------
     # Uncomment, mod next few lines if you are using newly downloaded OpenSSL
     #------------------------------------------------------------------------
