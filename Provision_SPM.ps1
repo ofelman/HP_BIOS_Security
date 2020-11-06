@@ -1,29 +1,30 @@
 ﻿# Script: Provision_SPM
+# script to provision (or deprovision) HP Secure Platform Management on a support client device
 # by Juergen Bayer, Dan Felman
-# HP Inc - 11/3/2020
+# HP Inc - 11/6/2020
 # version 1.0
 <#
-    This script is required to run twice for provisioning of Secure Platform (SPM)
-    ... first, to provision the Endorsement Key Payload and reboot (PPI required)
-    ... second, to provision the Signing Key Payload (no reboot required)
+    This script provisions both an SPM Endorsement Key and a Signing Key
+    --- a reboot is required to take effect after provisioning
+    --- during the reboot, a user has to acknowldege the security change by typing a challeng 4-digit PIN
 
     Assumptions:
 
     client device requires HP CMSL 1.6 or later installed
-    client device has Poweshell scripting authorization
+    client device has Poweshell scripting enabled
     Endorsement and Signing Payload files already created and transferred to client
     Payload.dat files created by these CMSL commands on a secure platform
         - New-HPSecurePlatformEndorsementKeyProvisioningPayload
         - New-HPSecurePlatformSigningKeyProvisioningPayload
-    This script resides on same folder as payload files (otherwise, provide paths in runstring)
+    This script assumes payload files are colocated with script (otherwise, provide paths in runstring)
 
     Provision Steps:
         - install CMSL on device
         - download payload files to device
         - confirm PS scripting is allowed
         - run script as Administrator with '-action provision' option
-        - confirm device has not been provisioned 'NotConfigured', deprovision if necessary
-          NOTE: reboot is required between Endorsement key provisioning and signing key provisioning
+        - scripts confirms device has not been provisioned 'NotConfigured', deprovision if necessary
+          NOTE: reboot is required after Endorsement key and signing key provisioning
 
     Deprovision steps:
         - run script/commands as Administrator
@@ -32,33 +33,27 @@
 [CmdLetBinding()]
 Param(
     [Parameter(Mandatory=$false, HelpMessage="Select one of 'Provision|Deprovision'")] 
-    [validateNotNullOrEmpty()]
-    [ValidateSet('Provision', 'Deprovision')] 
-    [string]$action,
-    [Parameter(Mandatory=$false, ValueFromRemainingArguments)]
-    [Switch]$help,
-    [Parameter(Mandatory=$false)]
-    [string]$Endorsement='EKpayload.dat',
-    [Parameter(Mandatory=$false)]
-    [string]$Signing='SKpayload.dat',
-    [Parameter(Mandatory=$false)]
-    [string]$Deprovision='EKDepropayload.dat'
+    [validateNotNullOrEmpty()] [ValidateSet('Provision', 'Deprovision')]  [string]$action,
+    [Parameter(Mandatory=$false, ValueFromRemainingArguments)] [Switch]$help,
+    [Parameter(Mandatory=$false)] [string]$EndorsementKey='EKpayload.dat',
+    [Parameter(Mandatory=$false)] [string]$SigningKey='SKpayload.dat',
+    [Parameter(Mandatory=$false)] [string]$Deprovision='EKDepropayload.dat'
 )
 
 if ( ($PSBoundParameters.count -eq 0) -or ($help) ) {
     "Run script with options > "
     "`tProvision_SPM.ps1 -action provision | deprovision  # assume files in current folder"
 
-    "`n`tProvision_SPM.ps1 -action provision [[-Endorsement <file>] [-Signing <file>]]"
+    "`n`tProvision_SPM.ps1 -action provision [[-EndorsementKey <file>] [-SigningKey <file>]]"
     "`tProvision_SPM.ps1 -action deprovision [[-Deprovision <file>]]"
     exit
 }
 # if file path options selected, make sure the file in each arg exists
 switch ( $PSBoundParameters.Keys ) {
-    'Endorsement' { 
-        if ( -not (test-path -Path $PSBoundParameters['Endorsement']) ) {'--- Endorsement file not found'; exit} }
-    'Signing' {
-        if ( -not (test-path -Path $PSBoundParameters['Signing']) ) {'--- Signing file not found'; exit} }
+    'EndorsementKey' { 
+        if ( -not (test-path -Path $PSBoundParameters['EndorsementKey']) ) {'--- EndorsementKey file not found'; exit} }
+    'SigningKey' {
+        if ( -not (test-path -Path $PSBoundParameters['SigningKey']) ) {'--- SigningKey file not found'; exit} }
     'Deprovision' {
         if ( -not (test-path -Path $PSBoundParameters['Deprovision']) ) {'--- Deprovision file not found'; exit} }
 }
@@ -88,33 +83,42 @@ Set-Location  $path
 
 if ( $action -eq 'provision' ) {
     'action: provision'
+
     # ----------------------------------------------------------
     # Endorsement Key first - will show ProvisioningInProgress
-    # then Signing Key - will show Provisioned
+    # then Signing Key - will show Provisioned after reboot
 
     if ( $SPMstate.state -match 'not' ) {
 
-        "Provisioning SPM EK Payload: $($Endorsement)"
-        Set-HPSecurePlatformPayload -PayloadFile $Endorsement
+        "Provisioning SPM EK Payload: $($EndorsementKey)"
+        Set-HPSecurePlatformPayload -PayloadFile $EndorsementKey
 
         # deal with Bitlocker now
+        "Checking Bitlocker State..."
         if ( $SuspendBitlocker -and ($BitlockerStatus -match 'on') ) {
+            "Suspending Bitlocker..."
             $BitlockerState = Suspend-BitLocker -MountPoint C: -RebootCount 1   # 1 = suspend to next reboot
             "Bitlocker Protection Status now: $($BitlockerState.protectionstatus)"
+        } else {
+            "Bitlocker State is Off"
         }
-        'Endorsement Key is provisioned. Please reboot, accept PPI and rerun script'
+        'Endorsement Key is provisioned'
+        "Provisioning SPM SK Payload: $($SigningKey)"
+        Set-HPSecurePlatformPayload -PayloadFile $SigningKey
+        '...SPM provisioning done. Please reboot, and accept PPI PIN'
         exit             # to allow reboot, and allow security PPI change in BIOS (PIN shown on reboot)
     
     } else {
         if ( $SPMstate.state -match 'inprogress' ) {
-            "Provisioning SPM SK Payload (SPM EK Provisioned), payload: $($Signing)"
-            Set-HPSecurePlatformPayload -PayloadFile $Signing
+            "Provisioning SPM SK Payload (SPM EK Provisioned), payload: $($SigningKey)"
+            Set-HPSecurePlatformPayload -PayloadFile $SigningKey
             '...SPM provisioning done'
         } else {
             'SPM already is Provisioned'
         }
     } # else if ( $SPMstate.state -match 'not' )
-}
+
+} # if ( $action -eq 'provision' )
 
 # ----------------------------------------------------------
 
