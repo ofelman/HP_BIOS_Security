@@ -1,5 +1,6 @@
 # HP_BIOS_Security
 Scripts to create Secure Platform and Sure Admin/EBAM certificates and provisioning payloads
+The scripts are freely available to help implement Secure Platform Management and Sure Admin
 
 HP Sure Admin is a certificate-based BIOS authentication mechanism that relies on the security of the Secure Platform Management (SPM) technology. By applying BIOS update or settings payloads that have been signed with the provisioned SPM of the client, it prevents rogue applications, agents, or malware from modifying the BIOS firmware code or settings and helps prevent those firmware attacks
 
